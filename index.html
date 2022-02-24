@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>md-suke-me</title>
+
+    <!-- 引入ElementUI样式 -->
+    <link rel="stylesheet" href="component/element-ui/index.css">
+	 <!-- md样式 -->
+	<link rel="stylesheet" href="component/editor.md/css/editormd.css" />
+	<!-- 全局样式 -->
+    <link rel="stylesheet" href="css/index.css"  crossorigin="anonymous">
+
+
+
+
+
+</head>
+<body>
+<div id="app" >
+	<div style="display: flex;flex-direction: row;justify-content: flex-end;padding: 10px;">
+		<el-button @click="openImage()" type="primary" size="mini">图片上传</el-button>
+		<el-button @click="copyHtml()" type="success" size="mini">一键复制html</el-button>
+	</div>
+   <div id="me-editor">
+      <textarea ></textarea>
+   </div>
+
+   <div style="text-align: center;">
+	   <p>基于开源组件<a href="https://pandao.github.io/editor.md/" target="_blank" title="Editor.md">Editor.md</a>开发的编辑器</p>
+   </div>
+
+</div>
+<script src="js/jquery-3.6.0.min.js" ></script>
+<!-- 引入mdjs -->
+<script src="component/editor.md/editormd.js"></script>
+<!--引入ElementUI组件必须先引入Vue-->
+<script src="vue/vue.js"></script>
+<!-- 引入ElementUI组件库 -->
+<script src="component/element-ui/index.js"></script>
+
+<script src="component/editor.md/editormd.js"></script>
+<script src="component/editor.md/lib/marked.min.js"></script>
+<script src="component/editor.md/lib/prettify.min.js"></script>
+
+
+<script>
+	var editor
+	$(function() {
+	    editor = editormd("me-editor", {
+					width: "100%",
+					height: "80vh",
+					syncScrolling: "single",
+					path   : "component/editor.md/lib/",
+					saveHTMLToTextarea: true,
+					emoji: true,
+					taskList: true,
+					tocm: true,         // Using [TOCM]
+					tex: true,                   // 开启科学公式TeX语言支持，默认关闭
+					flowChart: true,             // 开启流程图支持，默认关闭
+					sequenceDiagram: true,       // 开启时序/序列图支持，默认关闭,
+					searchReplace : true,
+					htmlDecode : "style,script,iframe|on*",            // 开启 HTML 标签解析，为了安全性，默认不开启
+					// imageUpload : true,
+					// imageFormats : ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+					// imageUploadURL : "./php/upload.php?test=dfdf",
+
+					/*
+					上传的后台只需要返回一个 JSON 数据，结构如下：
+					{
+					 success : 0 | 1,           // 0 表示上传失败，1 表示上传成功
+					 message : "提示的信息，上传成功或上传失败及错误信息等。",
+					 url     : "图片地址"        // 上传成功时才返回
+					}
+					*/
+			
+	     });
+		// 公式渲染组件自定义
+		editormd.katexURL = {
+			 js  : "component/katex/katex.min",  // default: //cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min
+			 css : "component/katex/katex.min"   // default: //cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min
+		};
+		//表情渲染
+		editormd.emoji   = {
+			// path  : "http://www.emoji-cheat-sheet.com/graphics/emojis/",
+			 path  : "component/emoji/",
+			 ext   : ".png"
+		};
+
+    });
+    var flvPlayer;
+    var app = new Vue({
+        el: '#app',
+        data: {
+			tempContent:window.localStorage.getItem("md-suke-content"),
+			timer:null,
+        },
+        created: function (){
+			clearInterval(this.timer)
+			const that = this;
+			setTimeout(()=>{
+				if(!this.tempContent){
+					this.$message.warning("未获取到历史信息")
+				}else{
+					editor.setMarkdown(this.tempContent)
+					this.$message.success("加载到历史记录，已恢复")
+				}
+				this.timer = setInterval(()=>{
+					that.saveContent()
+				},2000)
+			},1000)
+        },
+        methods : {
+			openImage:function(){
+				 editor.executePlugin("imageDialog", "/image-dialog/image-dialog");
+			},
+			
+			saveContent(){
+				// this.$message.success("内容已保存")
+				window.localStorage.setItem("md-suke-content",editor.getMarkdown())
+			},
+			copyHtml:function(){
+				 navigator.clipboard.writeText(editor.getPreviewedHTML()).then(()=>{
+						this.$message.success("复制成功")
+					}).catch(()=>{
+						this.$message.warning("复制失败")
+					})
+			},
+
+        },
+		
+
+    })
+</script>
+</body>
+</html>
